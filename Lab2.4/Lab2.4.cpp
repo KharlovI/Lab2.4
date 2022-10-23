@@ -33,7 +33,7 @@ int main()
 				diceMenu.SetIsPressed(mousePosition);
 				if (diceMenu.IsPressed())
 				{
-					StartDiceMenu(window, event, font, dice);
+					DiceMenu(window,  font, dice);
 					dice.DoExperiment(1000);
 					dice.PrintStatistic();
 					window.close();
@@ -42,8 +42,6 @@ int main()
 		}
 
 		window.clear();
-
-		//input.Draw(window);
 		diceMenu.Draw(window);
 		output.Draw(window);
 

@@ -10,6 +10,10 @@ void SetDiagramConfigs(Diagram& d, Dice& e);
 void DrawDiagram(Diagram& d, sf::RenderWindow& w);
 char& IntToChar(sf::Keyboard::Key& key);
 
-std::vector<Event2> Event(int countOfSimpleEvent, sf::RenderWindow& window, sf::Event& event, sf::Font& font);
+std::vector<Event2> SetEventProbabilitys(sf::RenderWindow& w, sf::Font& font, int eventCount);
 
-void StartDiceMenu(sf::RenderWindow& window, sf::Event& event, sf::Font& font, Dice& original);
+void DiceMenu(sf::RenderWindow& w, sf::Font& font, Dice& dice);
+int  EventCount(sf::RenderWindow& w, sf::Font& font);
+int Value(sf::RenderWindow& w, sf::Font& font);
+std::vector<Event2> DifferentEvents(std::vector<Event2> e1, std::vector<Event2> e2);
+std::vector<Event2> SameEvents(std::vector<Event2> e1, std::vector<Event2> e2);

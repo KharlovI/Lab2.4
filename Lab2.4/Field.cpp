@@ -122,7 +122,7 @@ bool Field::OnClick(sf::Vector2i mousePosition)
 	sf::Vector2f size = this->field.getSize();
 
 	if (mousePosition.x >= position.x && mousePosition.x <= position.x + size.x &&
-		mousePosition.x >= position.y && mousePosition.y <= position.y + size.y)
+		mousePosition.y >= position.y && mousePosition.y <= position.y + size.y)
 	{
 		return 1;
 	}

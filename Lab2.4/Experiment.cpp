@@ -59,18 +59,17 @@ void Experiment::SetResultat(std::vector<int> r)
 	this->etemptCount = r.size();
 }
 
-void Experiment::AddUserEvent(Event2& e)
+//void Experiment::AddUserEvent(Event2& e)
+//{
+//	this->userEvents.push_back(e);
+//	IncrementCount();
+//}
+void Experiment::AddUserEvent(std::vector<Event2> e)
 {
+
 	this->userEvents.push_back(e);
 	IncrementCount();
-}
-void Experiment::AddUserEvent(std::vector<Event2> e, int count)
-{
-	for (int i = 0; i < count; i++)
-	{
-		this->userEvents.push_back(e[i]);
-		IncrementCount();
-	}
+
 }
 
 void Experiment::IncrementCount()
@@ -109,7 +108,7 @@ Dice::Dice(int countOfSimpleEvent, bool equal, sf::RenderWindow& w, sf::Event& e
 
 	else
 	{
-		SetSimpleEvent(Event(countOfSimpleEvent, w, e, font));
+		SetSimpleEvent(SetEventProbabilitys(w, font, countOfSimpleEvent));
 	}
 }
 std::vector<int> Dice::CountEveryValu()
@@ -262,4 +261,179 @@ void Dice::PrintPosibleActions()
 {
 
 
+}
+
+std::vector<Event2> Dice::EventClass(sf::RenderWindow& w, sf::Font& font)
+{
+	std::vector<Event2> answer(0);
+
+	Panel panel("Choose class:", { 200,200 }, font);
+
+	Button isEqua("Equal X", { 200, 200 + (CHAR_SIZE_Button - 7) * 4 }, font);
+	Button notEqua("Not equal X", { 200, 200 + (CHAR_SIZE_Button - 7) * 6 }, font);
+	Button isMore("More than X", { 200, 200 + (CHAR_SIZE_Button - 7) * 8 }, font);
+	Button isLess("Less than X", { 200, 200 + (CHAR_SIZE_Button - 7) * 10 }, font);
+	Button isMultiple("Multiple by X", { 200, 200 + (CHAR_SIZE_Button - 7) * 12 }, font);
+	Button notMultiple("Not multiple by X", { 200, 200 + (CHAR_SIZE_Button - 7) * 14 }, font);
+
+	while (w.isOpen())
+	{
+		sf::Event event;
+		while (w.pollEvent(event))
+		{
+			if (event.type == sf::Event::Closed)
+			{
+				w.close();
+				return answer;
+			}
+
+			if (event.type == sf::Event::MouseButtonPressed)
+			{
+				sf::Vector2i mousePosition= sf::Mouse::getPosition(w);
+
+				isEqua.SetIsPressed(mousePosition);
+				notEqua.SetIsPressed(mousePosition);
+				isMore.SetIsPressed(mousePosition);
+				isLess.SetIsPressed(mousePosition);
+				isMultiple.SetIsPressed(mousePosition);
+				notMultiple.SetIsPressed(mousePosition);
+
+				if (isEqua.IsPressed())
+				{
+					int value = Value(w, font);
+					answer.push_back(this->GetSimpleEvent(value));
+					return answer;
+				}
+				if (notEqua.IsPressed())
+				{
+					int value = Value(w, font);
+					int count = this->GetCountEvent();
+
+					for (int i = 0; i < count; i++)
+					{
+						if (this->GetSimpleEvent(i).GetValue() != value)
+						{
+							answer.push_back(this->GetSimpleEvent(i));
+						}
+					}
+					return answer;
+				}
+				if (isMore.IsPressed())
+				{
+					int value = Value(w, font);
+					int count = this->GetCountEvent();
+
+					for (int i = value; i < count; i++)
+					{
+						answer.push_back(this->GetSimpleEvent(i));
+					}
+					return answer;
+				}
+				if (isLess.IsPressed())
+				{
+					int value = Value(w, font);
+
+					for (int i = 0; i < value - 1; i++)
+					{
+						answer.push_back(this->GetSimpleEvent(i));
+					}
+					return answer;
+				}
+				if (isMultiple.IsPressed())
+				{
+					int value = Value(w, font);
+					int count = this->GetCountEvent();
+
+					for (int i = 0; i < count; i++)
+					{
+						if(this->GetSimpleEvent(i).GetValue() % value == 0)
+							answer.push_back(this->GetSimpleEvent(i));
+					}
+					return answer;
+				}
+				if (notMultiple.IsPressed())
+				{
+					int value = Value(w, font);
+					int count = this->GetCountEvent();
+
+					for (int i = 0; i < count; i++)
+					{
+						if (this->GetSimpleEvent(i).GetValue() % value != 0)
+							answer.push_back(this->GetSimpleEvent(i));
+					}
+					return answer;
+				}
+			}
+		}
+
+		w.clear();
+		panel.Draw(w);
+		isEqua.Draw(w);
+		notEqua.Draw(w);
+		isMore.Draw(w);
+		isLess.Draw(w);
+		isMultiple.Draw(w);
+		notMultiple.Draw(w);
+
+		w.display();
+	}
+}
+
+
+void Dice::MakeEvent(sf::RenderWindow& w, sf::Font& font)
+{
+	std::vector<Event2> answer;
+	std::vector<Event2> temp;
+	Panel panel("Choose type:", {200,200}, font);
+	Button orButton("OR", {200, 200 + (CHAR_SIZE_Button - 7) * 4},font);
+	Button andButton("AND", { 200, 200 + (CHAR_SIZE_Button - 7) * 6 }, font);
+	Button continueButton("CONTINUE", { 200, 200 + (CHAR_SIZE_Button - 7) * 9 }, font);
+
+	while (w.isOpen())
+	{
+		sf::Event event;
+
+		while (w.pollEvent(event))
+		{
+			if (event.type == sf::Event::Closed)
+			{
+				w.close();
+				return;
+			}
+
+			if (event.type == sf::Event::MouseButtonPressed)
+			{
+				sf::Vector2i mousePosition = sf::Mouse::getPosition(w);
+
+				orButton.SetIsPressed(mousePosition);
+				andButton.SetIsPressed(mousePosition);
+				continueButton.SetIsPressed(mousePosition);
+
+				if (orButton.IsPressed())
+				{
+					temp = EventClass(w, font);
+					answer = DifferentEvents(answer, temp);
+				}
+
+				else if (andButton.IsPressed())
+				{
+					temp = EventClass(w, font);
+					answer = SameEvents(answer, temp);
+				}
+
+				else if (continueButton.IsPressed())
+				{
+
+				}
+			}
+		}
+
+		w.clear();
+
+		panel.Draw(w);
+		orButton.Draw(w);
+		andButton.Draw(w);
+
+		w.display();
+	}
 }
