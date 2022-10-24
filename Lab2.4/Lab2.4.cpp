@@ -34,8 +34,7 @@ int main()
 				if (diceMenu.IsPressed())
 				{
 					DiceMenu(window,  font, dice);
-					dice.DoExperiment(1000);
-					dice.PrintStatistic();
+					//dice.PrintStatistic();
 					window.close();
 				}
 			}

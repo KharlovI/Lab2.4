@@ -17,3 +17,8 @@ int  EventCount(sf::RenderWindow& w, sf::Font& font);
 int Value(sf::RenderWindow& w, sf::Font& font);
 std::vector<Event2> DifferentEvents(std::vector<Event2> e1, std::vector<Event2> e2);
 std::vector<Event2> SameEvents(std::vector<Event2> e1, std::vector<Event2> e2);
+
+bool EventOnRes(int value, std::vector<int> res);
+bool EventContainThisValue(int value, std::vector<Event2> event);
+
+void ShowResultat(std::vector<std::vector<Event2>> userEvents, std::vector<int> res, int countSE, std::vector<int> countEverySE, sf::RenderWindow& w, sf::Font& f);

@@ -20,9 +20,12 @@ public:
 
 	int GetCountEtempt();
 	int GetCountEvent();
+	int GetUserEventCount();
 
 	std::vector<Event2> GetSimpleEvent();
+	std::vector<std::vector<Event2>> GetUserEvent();
 	Event2 GetSimpleEvent(int index);
+	std::vector<Event2> GetUserEvent(int index);
 
 	std::vector<int> GetResultat();
 	int GetResultat(int index);
@@ -31,12 +34,13 @@ public:
 	void SetSimpleEvent(std::vector<Event2> e);
 	void SetResultat(std::vector<int> r);
 
-	//void AddUserEvent(Event2& e);
 	void AddUserEvent(std::vector<Event2> e);
 
 	void IncrementCount();
 
 	void PrintRes();											// DELETE!!!!
+
+	std::vector<int> CountEveryValu();
 };
 
 
@@ -52,7 +56,6 @@ public:
 	{
 		this->SetSimpleEvent(d.GetSimpleEvent());
 	}
-	std::vector<int> CountEveryValu();
 	std::vector<int> RarestAndFrequent();
 
 	void PrintStatistic();										// Rework or delete

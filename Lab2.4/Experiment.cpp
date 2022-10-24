@@ -26,6 +26,10 @@ int Experiment::GetCountEvent()
 {
 	return this->SE_count;
 }
+int Experiment::GetUserEventCount()
+{
+	return this->UE_count;
+}
 std::vector<int> Experiment::GetResultat()
 {
 	return this->res;
@@ -34,9 +38,17 @@ Event2 Experiment::GetSimpleEvent(int index)
 {
 	return this->simpleEvents[index];
 }
+std::vector<Event2> Experiment::GetUserEvent(int index)
+{
+	return this->userEvents[index];
+}
 std::vector<Event2> Experiment::GetSimpleEvent()
 {
 	return this->simpleEvents;
+}
+std::vector<std::vector<Event2>> Experiment::GetUserEvent()
+{
+	return this->userEvents;
 }
 int Experiment::GetResultat(int index)
 {
@@ -59,16 +71,11 @@ void Experiment::SetResultat(std::vector<int> r)
 	this->etemptCount = r.size();
 }
 
-//void Experiment::AddUserEvent(Event2& e)
-//{
-//	this->userEvents.push_back(e);
-//	IncrementCount();
-//}
 void Experiment::AddUserEvent(std::vector<Event2> e)
 {
 
 	this->userEvents.push_back(e);
-	IncrementCount();
+	this->UE_count++;
 
 }
 
@@ -83,7 +90,17 @@ void Experiment::PrintRes()
 		std::cout << i << ") " << this->res[i] << std::endl;
 	}
 }
+std::vector<int> Experiment::CountEveryValu()
+{
+	int eventCount = GetCountEvent();
+	std::vector<int> answer(eventCount);
 
+	for (int i = 0; i < GetCountEtempt(); i++)
+	{
+		answer[GetResultat(i) - 1]++;
+	}
+	return answer;
+}
 Dice::Dice()
 {
 	std::vector<Event2> temp(0);
@@ -111,17 +128,6 @@ Dice::Dice(int countOfSimpleEvent, bool equal, sf::RenderWindow& w, sf::Event& e
 		SetSimpleEvent(SetEventProbabilitys(w, font, countOfSimpleEvent));
 	}
 }
-std::vector<int> Dice::CountEveryValu()
-{
-	int eventCount = GetCountEvent();
-	std::vector<int> answer(eventCount);
-
-	for (int i = 0; i < GetCountEtempt(); i++)
-	{
-		answer[GetResultat(i) - 1]++;
-	}
-	return answer;
-}
 
 void Dice::DoExperiment(int count)
 {
@@ -148,7 +154,6 @@ void Dice::DoExperiment(int count)
 				tempRes = GetSimpleEvent()[index].GetValue();
 				res.push_back(tempRes);
 				IncrementCount();
-
 			}
 
 			else
@@ -242,6 +247,27 @@ void Dice::PrintStatistic()
 	std::vector<int> countEveryEvent = CountEveryValu();
 	std::vector<int> rarestAndFrequent = RarestAndFrequent();
 
+	std::vector<int> countEveryUserEvent;
+	int temp = 0;
+
+	for (int i = 0; i < this->GetUserEventCount(); i++)
+	{
+		for (int j = 0; j < this->GetCountEvent(); j++)
+		{
+			if (EventContainThisValue(j + 1, this->GetUserEvent(i)))
+			{
+				temp += countEveryEvent[j];
+			}
+		}
+		countEveryUserEvent.push_back(temp);
+		temp = 0;
+	}
+
+	for (int i = 0; i < countEveryUserEvent.size(); i++)
+	{
+		std::cout << countEveryUserEvent[i] << std::endl;
+	}
+
 	std::cout << "________________________" << std::endl << std::endl;
 	std::cout << "Mat expectation: " << expectation << std::endl;
 	std::cout << "________________________" << std::endl << std::endl;
@@ -269,12 +295,12 @@ std::vector<Event2> Dice::EventClass(sf::RenderWindow& w, sf::Font& font)
 
 	Panel panel("Choose class:", { 200,200 }, font);
 
-	Button isEqua("Equal X", { 200, 200 + (CHAR_SIZE_Button - 7) * 4 }, font);
-	Button notEqua("Not equal X", { 200, 200 + (CHAR_SIZE_Button - 7) * 6 }, font);
-	Button isMore("More than X", { 200, 200 + (CHAR_SIZE_Button - 7) * 8 }, font);
-	Button isLess("Less than X", { 200, 200 + (CHAR_SIZE_Button - 7) * 10 }, font);
-	Button isMultiple("Multiple by X", { 200, 200 + (CHAR_SIZE_Button - 7) * 12 }, font);
-	Button notMultiple("Not multiple by X", { 200, 200 + (CHAR_SIZE_Button - 7) * 14 }, font);
+	Button isEqua("Equal X", { 200, 200 + (CHAR_SIZE_Button - 7) * 5 }, font);
+	Button notEqua("Not equal X", { 200, 200 + (CHAR_SIZE_Button - 7) * 8 }, font);
+	Button isMore("More than X", { 200, 200 + (CHAR_SIZE_Button - 7) * 11 }, font);
+	Button isLess("Less than X", { 200, 200 + (CHAR_SIZE_Button - 7) * 14 }, font);
+	Button isMultiple("Multiple by X", { 200, 200 + (CHAR_SIZE_Button - 7) * 17 }, font);
+	Button notMultiple("Not multiple by X", { 200, 200 + (CHAR_SIZE_Button - 7) * 20 }, font);
 
 	while (w.isOpen())
 	{
@@ -379,15 +405,17 @@ std::vector<Event2> Dice::EventClass(sf::RenderWindow& w, sf::Font& font)
 	}
 }
 
-
 void Dice::MakeEvent(sf::RenderWindow& w, sf::Font& font)
 {
 	std::vector<Event2> answer;
 	std::vector<Event2> temp;
 	Panel panel("Choose type:", {200,200}, font);
-	Button orButton("OR", {200, 200 + (CHAR_SIZE_Button - 7) * 4},font);
-	Button andButton("AND", { 200, 200 + (CHAR_SIZE_Button - 7) * 6 }, font);
-	Button continueButton("CONTINUE", { 200, 200 + (CHAR_SIZE_Button - 7) * 9 }, font);
+	Button orButton("    OR    ", {200, 200 + (CHAR_SIZE_Button - 7) * 4},font);
+	Button andButton("    AND   ", { 200, 200 + (CHAR_SIZE_Button - 7) * 7 }, font);
+	Button continueButton(" CONTINUE ", { 200, 200 + (CHAR_SIZE_Button - 7) * 10 }, font);
+
+	temp = EventClass(w, font);
+	answer = DifferentEvents(answer, temp);
 
 	while (w.isOpen())
 	{
@@ -423,7 +451,8 @@ void Dice::MakeEvent(sf::RenderWindow& w, sf::Font& font)
 
 				else if (continueButton.IsPressed())
 				{
-
+					this->AddUserEvent(answer);
+					return;
 				}
 			}
 		}
@@ -433,6 +462,7 @@ void Dice::MakeEvent(sf::RenderWindow& w, sf::Font& font)
 		panel.Draw(w);
 		orButton.Draw(w);
 		andButton.Draw(w);
+		continueButton.Draw(w);
 
 		w.display();
 	}

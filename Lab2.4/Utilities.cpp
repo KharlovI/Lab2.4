@@ -234,11 +234,18 @@ std::vector<Event2> SetEventProbabilitys(sf::RenderWindow& w, sf::Font& font, in
 
 				if (field.OnClick(mousePosition))
 				{
+					if (currentProbability <= 1 && currentProbability == maxValue)
+					{
+						answer.push_back({ currentProbability, counter });
+						counter++;
+						break;
+					}
+
 					field.SetSring(w, event);
 					temp = field.GetInput();				
 					currentProbability = StringToDouble(temp);
 
-					if (currentProbability <= 1 || currentProbability <= maxValue)
+					if (currentProbability <= 1 || currentProbability < maxValue)
 					{
 						maxValue -= currentProbability;
 						panel2.SetText("Max probability:" + DoubleToString(maxValue));
@@ -246,7 +253,6 @@ std::vector<Event2> SetEventProbabilitys(sf::RenderWindow& w, sf::Font& font, in
 						counter++;
 
 					}
-					
 				}
 			}
 		}
@@ -261,6 +267,7 @@ std::vector<Event2> SetEventProbabilitys(sf::RenderWindow& w, sf::Font& font, in
 
 void DiceMenu(sf::RenderWindow& w, sf::Font& font, Dice& dice)
 {
+	Field field({200 - (CHAR_SIZE_Button - 7) * 11, 200},10 , font);
 	Panel panel("Select variant:", { 200, 200 }, font);
 	Button button1("Set equel probability", { 200 + (CHAR_SIZE_Button - 7) * 17, 200 }, font);
 	Button button2("Set probability", { 200 + (CHAR_SIZE_Button - 7) * 17, 200 + (CHAR_SIZE_Button - 7) * 3 }, font);
@@ -315,7 +322,143 @@ void DiceMenu(sf::RenderWindow& w, sf::Font& font, Dice& dice)
 			break;
 	}
 
-	dice.MakeEvent(w, font);
+	panel.SetText("Select function:");
+	button1.SetText("Make event");
+	button2.SetText("Continue");
+
+	flag = 0;
+	while (w.isOpen())
+	{
+		sf::Event event;
+
+		while (w.pollEvent(event))
+		{
+			if(event.type == sf::Event::Closed)
+			{
+				w.close();
+				return;
+			}
+
+			if (event.type == sf::Event::MouseButtonPressed)
+			{
+				sf::Vector2i mousePosition = sf::Mouse::getPosition(w);
+
+				button1.SetIsPressed(mousePosition);
+				button2.SetIsPressed(mousePosition);
+
+				if (button1.IsPressed())
+				{
+					dice.MakeEvent(w, font);
+					break;
+				}
+				if (button2.IsPressed())
+				{
+					flag = 1;
+					break;
+				}
+			}
+		}
+
+		if (flag)
+			break;
+
+		w.clear();
+		panel.Draw(w);
+		button1.Draw(w);
+		button2.Draw(w);
+		w.display();
+	}
+	flag = 0;
+
+	panel.SetText("Enter count");
+	int countExperiment = 0;
+
+	while (w.isOpen())
+	{
+		sf::Event event;
+
+		while (w.pollEvent(event))
+		{
+			if (event.type == sf::Event::Closed)
+			{
+				w.close();
+				return;
+			}
+
+			if (event.type == sf::Event::MouseButtonPressed)
+			{
+				sf::Vector2i mousePosition = sf::Mouse::getPosition(w);
+
+				if (field.OnClick(mousePosition))
+				{
+					field.SetSring(w, event);
+					countExperiment = StringToDouble(field.GetInput());
+					flag = 1;
+					break;
+				}
+			}
+		}
+
+		if (flag)
+			break;
+
+		w.clear();
+		field.Draw(w);
+		panel.Draw(w);
+		w.display();
+	}
+
+	panel.SetText("Choose function:");
+	button1.SetText("Do Experiment");
+	flag = 0;
+
+
+	while (w.isOpen())
+	{
+		sf::Event event;
+
+		while (w.pollEvent(event))
+		{
+			if (event.type == sf::Event::Closed)
+			{
+				w.close();
+				return;
+			}
+
+			if (event.type == sf::Event::MouseButtonPressed)
+			{
+				sf::Vector2i mousePosition = sf::Mouse::getPosition(w);
+
+				button1.SetIsPressed(mousePosition);
+				button2.SetIsPressed(mousePosition);
+
+				if (button1.IsPressed())
+				{
+					
+					dice.DoExperiment(countExperiment);
+					flag = 1;
+					break;
+				}
+				if (button2.IsPressed())
+				{
+					flag = 1;
+					break;
+				}
+			}
+		}
+
+		if (flag)
+			break;
+
+		w.clear();
+		panel.Draw(w);
+		button1.Draw(w);
+		button2.Draw(w);
+		w.display();
+	}
+
+	std::vector<int> countEveryEvent = dice.CountEveryValu();
+	ShowResultat(dice.GetUserEvent(), dice.GetResultat(), dice.GetCountEvent(), countEveryEvent, w, font);
 }
 
 int EventCount(sf::RenderWindow& w, sf::Font& font)
@@ -446,4 +589,184 @@ std::vector<Event2> SameEvents(std::vector<Event2> e1, std::vector<Event2> e2)
 	}
 
 	return answer;
+}
+
+bool EventOnRes(int value, std::vector<int> res)
+{
+	for (int i = 0; i < res.size(); i++)
+	{
+		if (res[i] == value)
+			return 1;
+	}
+
+	return 0;
+}
+bool EventContainThisValue(int value, std::vector<Event2> event)
+{
+	for (int i = 0; i < event.size(); i++)
+	{
+		if (event[i].GetValue() == value)
+			return 1;
+	}
+
+	return 0;
+}
+
+void ShowResultat(std::vector<std::vector<Event2>> userEvents, std::vector<int> res, int countSE, std::vector<int> countEverySE, sf::RenderWindow& w, sf::Font& f)
+{
+	int index1 = 0;
+	int index2 = 0;
+	int index3 = 0;
+
+	std::vector<int> countEveryUserEvent;
+	int temp = 0;
+
+	
+	for (int i = 0; i < userEvents.size(); i++)
+	{
+		for (int j = 0; j < countSE; j++)
+		{
+			if (EventContainThisValue(j + 1, userEvents[i]))
+			{
+				temp += countEverySE[j];
+			}
+		}
+		countEveryUserEvent.push_back(temp);
+		temp = 0;
+	}
+
+	if (countEveryUserEvent.size() == 0)
+	{
+		countEveryUserEvent = std::vector<int>(1);
+	}
+
+	Button EXIT("EXIT", { 200,200 + (CHAR_SIZE_PANEL - 7) * 10 }, f);
+
+	Panel panel11("        Steps:        ", {200,200 }, f);
+	Panel panel21(" Value of user event: ", { 200,200 + (CHAR_SIZE_PANEL - 7) * 3 }, f);
+	Panel panel31("Value of simple event:", { 200,200 + (CHAR_SIZE_PANEL - 7) * 6 }, f);
+
+	Panel panel12(DoubleToString(index1) + ")" + DoubleToString(res[0]), {200 + (CHAR_SIZE_Button - 7) * 30,200}, f);
+	Panel panel22(DoubleToString(index2) + ")" + DoubleToString(countEveryUserEvent[0]), { 200 + (CHAR_SIZE_Button - 7) * 30,200 + (CHAR_SIZE_Button - 7) * 3 }, f);
+	Panel panel32(DoubleToString(index3 + 1) + ": " + DoubleToString(countEverySE[0]), { 200 + (CHAR_SIZE_Button - 7) * 30,200 + (CHAR_SIZE_Button - 7) * 6 }, f);
+
+	Button b1L(" < ", { 200 + (CHAR_SIZE_Button - 7) * 25 , 200 }, f);
+	Button b1R(" > ", { 200 + (CHAR_SIZE_Button - 7) * 43 , 200 }, f);
+	Button b2L(" < ", { 200 + (CHAR_SIZE_Button - 7) * 25 , 200 + (CHAR_SIZE_Button - 7) * 3 }, f);
+	Button b2R(" > ", { 200 + (CHAR_SIZE_Button - 7) * 43 , 200 + (CHAR_SIZE_Button - 7) * 3 }, f);
+	Button b3L(" < ", { 200 + (CHAR_SIZE_Button - 7) * 25 , 200 + (CHAR_SIZE_Button - 7) * 6 }, f);
+	Button b3R(" > ", { 200 + (CHAR_SIZE_Button - 7) * 43 , 200 + (CHAR_SIZE_Button - 7) * 6 }, f);
+
+	while (w.isOpen())
+	{
+		sf::Event event;
+		while (w.pollEvent(event))
+		{
+			if (event.type == sf::Event::Closed)
+			{
+				w.close();
+				return;
+			}
+
+			if (event.type == sf::Event::MouseButtonPressed)
+			{
+				sf::Vector2i mousePosition = sf::Mouse::getPosition(w);
+
+				b1L.SetIsPressed(mousePosition);
+				b1R.SetIsPressed(mousePosition);
+				b2L.SetIsPressed(mousePosition);
+				b2R.SetIsPressed(mousePosition);
+				b3L.SetIsPressed(mousePosition);
+				b3R.SetIsPressed(mousePosition);
+				EXIT.SetIsPressed(mousePosition);
+
+				if (b1L.IsPressed())
+				{
+					if (index1 == 0)
+						index1 = res.size() - 1;
+					else
+						index1--;
+
+					panel12.SetText(DoubleToString(index1) + ")" + DoubleToString(res[index1]));
+					break;
+				}
+				if (b1R.IsPressed())
+				{
+					if (index1 == res.size() - 1)
+						index1 = 0;
+					else
+						index1++;
+
+					panel12.SetText(DoubleToString(index1) + ")" + DoubleToString(res[index1]));
+					break;
+				}
+				if (b2L.IsPressed())
+				{
+					if (index2 == 0)
+						index2 = countEveryUserEvent.size() - 1;
+					else
+						index2--;
+
+					panel22.SetText(DoubleToString(index2) + ")" + DoubleToString(countEveryUserEvent[index2]));
+					break;
+				}
+				if (b2R.IsPressed())
+				{
+					if (index2 == countEveryUserEvent.size() - 1)
+						index2 = 0;
+					else
+						index2++;
+
+					panel22.SetText(DoubleToString(index2) + ")" + DoubleToString(countEveryUserEvent[index2]));
+					break;
+				}
+				if (b3L.IsPressed())
+				{
+					if (index3 == 0)
+						index3 = countEverySE.size() - 1;
+					else
+						index3--;
+
+					panel32.SetText(DoubleToString(index3 + 1) + ": " + DoubleToString(countEverySE[index3]));
+					break;
+				}
+				if (b3R.IsPressed())
+				{
+					if (index3 == countEverySE.size() - 1)
+						index3 = 0;
+					else
+						index3++;
+
+					panel32.SetText(DoubleToString(index3 + 1) + ": " + DoubleToString(countEverySE[index3]));
+					break;
+				}
+
+				if (EXIT.IsPressed())
+				{
+					w.close();
+					return;
+				}
+			}
+		}
+
+		w.clear();
+
+		b1L.Draw(w);
+		b1R.Draw(w);
+		b2L.Draw(w);
+		b2R.Draw(w);
+		b3L.Draw(w);
+		b3R.Draw(w);
+		EXIT.Draw(w);
+
+		panel11.Draw(w);
+		panel12.Draw(w);
+		panel21.Draw(w);
+		panel22.Draw(w);
+		panel31.Draw(w);
+		panel32.Draw(w);
+
+		w.display();
+	}
+
 }
