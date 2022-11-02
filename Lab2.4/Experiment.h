@@ -2,6 +2,10 @@
 #include<vector>
 #include"Event2.h"
 #include <SFML/Graphics.hpp>
+
+constexpr int WINDOW_WIDTH = 1000;
+constexpr int WINDOW_HEIGHT = 1000;
+
 class Experiment
 {
 private:
@@ -33,7 +37,10 @@ public:
 	void SetSimpleEvent(Event2& e);
 	void SetSimpleEvent(std::vector<Event2> e);
 	void SetResultat(std::vector<int> r);
-
+	void SetCountOFEtempt(int count) { this->etemptCount = count; }
+	void SetCountOfSE(int count) { this->SE_count = count; }
+	void SetCountOfUserEvent(int count) { this->UE_count = count; }
+	void SetUserEvent(std::vector<std::vector<Event2>> e) { this->userEvents = e; }
 	void AddUserEvent(std::vector<Event2> e);
 
 	void IncrementCount();
@@ -41,6 +48,8 @@ public:
 	void PrintRes();											// DELETE!!!!
 
 	std::vector<int> CountEveryValu();
+
+	std::vector<int> RarestAndFrequent();
 };
 
 
@@ -55,12 +64,13 @@ public:
 	void operator =(Dice& d)
 	{
 		this->SetSimpleEvent(d.GetSimpleEvent());
+		this->SetResultat(d.GetResultat());
+		this->SetCountOfSE(d.GetCountEvent());
+		this->SetCountOFEtempt(d.GetCountEtempt());
+		this->SetCountOfUserEvent(d.GetUserEventCount());
+		
 	}
-	std::vector<int> RarestAndFrequent();
 
-	void PrintStatistic();										// Rework or delete
-
-	void PrintPosibleActions();									// Rework or delete
 	std::vector<Event2> EventClass(sf::RenderWindow& w, sf::Font& font);
 	void MakeEvent(sf::RenderWindow& w, sf::Font& font);
 
@@ -69,12 +79,25 @@ public:
 	double Deviation(double dispersion);
 };
 
-class Coin
+class PlayingCards : public Experiment
 {
+private:
+	std::vector<int> indexes;
+public:
+	PlayingCards();
+	PlayingCards(sf::RenderWindow& w, sf::Font& font);
+	void operator =(PlayingCards& pc)
+	{
+		this->SetSimpleEvent(pc.GetSimpleEvent());
+		this->indexes = pc.GEtIndexes();
+		this->SetResultat(pc.GetResultat());
+		this->SetCountOfSE(pc.GetCountEvent());
+		this->SetCountOFEtempt(pc.GetCountEtempt());	
+		this->SetUserEvent(pc.GetUserEvent());
+	}
+	std::vector<int> GEtIndexes();
+	int GetIndex(int index);
 
-};
-
-class Cards
-{
+	void DoExperiment();
 
 };

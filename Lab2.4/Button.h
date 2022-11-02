@@ -8,6 +8,7 @@ private:
 	sf::Text text;
 	sf::RectangleShape shape;
 	bool isPressed;
+	bool enable;
 	
 public:
 
@@ -15,6 +16,7 @@ public:
 	Button(std::string name, sf::Vector2f position, sf::Font& font);
 
 	void SetIsPressed(sf::Vector2i mousePosition);
+	void SetEnable(bool isEnable);
 	void SetTextColor(sf::Color color);
 	void SetShapeColor(sf::Color color);
 	void SetPosiyion(sf::Vector2f position);
@@ -22,6 +24,7 @@ public:
 
 	void Draw(sf::RenderWindow& w);
 	bool IsPressed();
+	bool Enable();
 	void Delete();
 };
 

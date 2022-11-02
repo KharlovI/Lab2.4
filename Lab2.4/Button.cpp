@@ -4,9 +4,12 @@ Button::Button()
 {
 	this->isPressed = 0;
 }
+
 Button::Button(std::string name, sf::Vector2f position, sf::Font& font)
 {
 	this->isPressed = 0;
+	this->enable = 1;
+
 	sf::Vector2f size;
 	size.x = name.size() * (CHAR_SIZE_Button - 7);
 	size.y = 2 * (CHAR_SIZE_Button - 7);
@@ -38,14 +41,26 @@ void Button::SetIsPressed(sf::Vector2i mousePosition)
 		this->isPressed = 1;
 	}
 }
+
+void Button::SetEnable(bool isEnable)
+{
+	this->enable = isEnable;
+	if (isEnable)
+		SetShapeColor(sf::Color::White);
+	else
+		SetShapeColor(sf::Color(192, 192, 192));
+}
+
 void Button::SetTextColor(sf::Color color)
 {
 	this->text.setFillColor(color);
 }
+
 void Button::SetShapeColor(sf::Color color)
 {
 	this->shape.setFillColor(color);
 }
+
 void Button::SetPosiyion(sf::Vector2f position)
 {
 	this->shape.setPosition(position);
@@ -77,6 +92,11 @@ bool Button::IsPressed()
 	}
 
 	return this->isPressed;
+}
+
+bool Button::Enable()
+{
+	return this->enable;
 }
 
 void Button::Delete()

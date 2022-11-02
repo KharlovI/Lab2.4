@@ -61,3 +61,12 @@ void Panel::Clean()
 
 	this->shape.setSize({ 0,0 });
 }
+
+void Panel::SetShapeColor(sf::Color c)
+{
+	this->shape.setFillColor(c);
+}
+void Panel::SetTextColor(sf::Color c)
+{
+	this->text.setFillColor(c);
+}

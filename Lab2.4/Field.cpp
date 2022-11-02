@@ -67,7 +67,7 @@ void Field::SetSring(sf::RenderWindow& w, sf::Event& e)
 				break;
 			if (temp == 'b')
 				this->PopChar();
-			else
+			else if(temp != ' ')
 			{
 				this->AddChar(temp);
 			}

@@ -146,7 +146,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Button.cpp" />
-    <ClCompile Include="Diagram.cpp" />
     <ClCompile Include="Event2.cpp" />
     <ClCompile Include="Experiment.cpp" />
     <ClCompile Include="Field.cpp" />
@@ -157,7 +156,6 @@
   <ItemGroup>
     <ClInclude Include="..\..\GaussianElimination\GaussianElimination\doctest.h" />
     <ClInclude Include="Button.h" />
-    <ClInclude Include="Diagram.h" />
     <ClInclude Include="Event2.h" />
     <ClInclude Include="Experiment.h" />
     <ClInclude Include="Field.h" />
