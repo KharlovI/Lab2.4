@@ -51,6 +51,11 @@ void Panel::SetPosition(sf::Vector2f position)
 	this->text.setPosition({ position.x , position.y + CHAR_SIZE_PANEL / 2 });
 }
 
+void Panel::SetFont(sf::Font& font)
+{
+	this->text.setFont(font);
+}
+
 void Panel::Clean()
 {
 	sf::Text temp;
@@ -60,6 +65,24 @@ void Panel::Clean()
 	temp.setFillColor(sf::Color::Black);
 
 	this->shape.setSize({ 0,0 });
+}
+
+void Panel::SetWidth(int width)
+{
+	sf::Vector2f size;
+	size.y = this->shape.getSize().y;
+	size.x= width * (CHAR_SIZE_PANEL - 7);
+	this->shape.setSize(size);
+}
+
+void Panel::SetCharSize(int size)
+{
+	this->text.setCharacterSize(size);
+}
+
+sf::RectangleShape& Panel::GetShape()
+{
+	return this->shape;
 }
 
 void Panel::SetShapeColor(sf::Color c)

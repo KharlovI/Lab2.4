@@ -68,6 +68,7 @@ public:
 		this->SetCountOfSE(d.GetCountEvent());
 		this->SetCountOFEtempt(d.GetCountEtempt());
 		this->SetCountOfUserEvent(d.GetUserEventCount());
+		this->SetUserEvent(d.GetUserEvent());
 		
 	}
 

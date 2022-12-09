@@ -1,8 +1,8 @@
 #pragma once
+#include"Table.h"
 #include"Experiment.h"
 #include"Button.h"
 #include"Field.h"
-#include"Panel.h"
 
 enum Status
 {
@@ -10,7 +10,7 @@ enum Status
 	ThisValueOnEnotherPosition,
 	AnotherValueOnThisPosition,
 	IndexIsLower,
-	IndexIsHire
+	IndexAbove
 };
 
 struct ValueIndex
@@ -38,8 +38,8 @@ bool VectoreContainValue(std::vector<Event2> v, int value);
 
 std::vector<std::vector<ValueIndex>> MakeEvent(sf::RenderWindow& w, sf::Font& font, int countOfSE);
 
-void ShowResultat(Dice& dice, sf::RenderWindow& w, sf::Font& f);
-void ShowResultat(sf::RenderWindow& w, sf::Font& f, PlayingCards& cards, std::vector<std::vector<ValueIndex>> userEvent);
+void ShowResult(Dice& dice, sf::RenderWindow& w, sf::Font& f);
+void ShowResult(sf::RenderWindow& w, sf::Font& f, PlayingCards& cards, std::vector<std::vector<ValueIndex>> userEvent);
 
 std::vector <std::vector<ValueIndex>> CardMenu(sf::RenderWindow& w, sf::Font& f, PlayingCards& c);
 void UI(sf::RenderWindow& w, sf::Font& f);

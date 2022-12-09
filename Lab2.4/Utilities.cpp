@@ -235,7 +235,7 @@ std::vector<Event2> SetEventProbabilitys(sf::RenderWindow& w, sf::Font& font, in
 					temp = field.GetInput();				
 					currentProbability = StringToDouble(temp);
 
-					if ((maxValue - currentProbability >= 0.001 || currentProbability - maxValue >= 0.001) && counter <= eventCount)
+					if (maxValue - currentProbability >= 0 && counter <= eventCount)
 					{
 						eventCountTemp--;
 						maxValue -= currentProbability;
@@ -244,6 +244,16 @@ std::vector<Event2> SetEventProbabilitys(sf::RenderWindow& w, sf::Font& font, in
 						answer.push_back({ currentProbability, counter });
 						counter++;
 
+					}
+					else if (maxValue - currentProbability < 0 && counter <= eventCount)
+					{
+						eventCountTemp--;
+						currentProbability = maxValue;
+						maxValue = 0;
+						panel2.SetText("Max probability:      " + DoubleToString(maxValue));
+						panel3.SetText("Count of probabilitys:" + DoubleToString(eventCountTemp));
+						answer.push_back({ currentProbability, counter });
+						counter++;
 					}
 				}
 			}
@@ -292,8 +302,11 @@ void DiceMenu(sf::RenderWindow& w, sf::Font& font, Dice& dice)
 				if (button1.IsPressed())
 				{
 					count = EventCount(w, font);
-					Dice newDice(count, 1, w, event, font);
-					dice = newDice;
+					if (count >= 1)
+					{
+						Dice newDice(count, 1, w, event, font);
+						dice = newDice;
+					}
 					flag = 1;
 					break;
 				}
@@ -550,6 +563,7 @@ std::vector<ValueIndex> TypeEventCards(sf::RenderWindow& w, sf::Font& f, int cou
 	int index = 0;
 
 	Panel maxValue("Max value and position is:" + DoubleToString(countOfSE), { 0,200 - NORMALISED_SIZE * 4}, f);
+	maxValue.SetShapeColor(sf::Color(204, 204, 255));
 	Panel panel1("Enter value   ", { 0,200 }, f);
 	Panel panel2("Enter position", { 0,200 + NORMALISED_SIZE * 4 }, f);
 	Panel panel12("Current value is: " + DoubleToString(value), {NORMALISED_SIZE * 30, 200}, f);
@@ -693,7 +707,7 @@ std::vector<ValueIndex> TypeEventCards(sf::RenderWindow& w, sf::Font& f, int cou
 						break;
 					}
 
-					temp.push_back({ value, index, Status::IndexIsHire });
+					temp.push_back({ value, index, Status::IndexAbove });
 					return temp;
 				}
 			}
@@ -721,14 +735,25 @@ std::vector<ValueIndex> TypeEventCards(sf::RenderWindow& w, sf::Font& f, int cou
 }
 std::vector<std::vector<ValueIndex>> MakeEvent(sf::RenderWindow& w, sf::Font& font, int countOfSE)
 {
-	std::vector<std::vector<ValueIndex>> answer;
-	Panel description("OR, AND add additional event. Continue - go to next step", {0, 170}, font);
-	description.SetShapeColor(sf::Color(204, 204, 255));
+	int currentConnection = 0;
+	Button UP(" ^ ", { NORMALISED_SIZE * 47,NORMALISED_SIZE * 3 }, font);
+	Button DOWN(" v ", { NORMALISED_SIZE * 47, NORMALISED_SIZE * 28 }, font);
 
-	Panel panel("Choose option:", {0,200 }, font);
-	Button ORButton("OR", { NORMALISED_SIZE * 17, 200 }, font);
-	Button ANDButton("AND", { NORMALISED_SIZE * 17, 200 + NORMALISED_SIZE * 3 }, font);
-	Button ContinueButton("Contunue", { NORMALISED_SIZE * 17, 200 + NORMALISED_SIZE * 9 }, font);
+	Panel connectionIndex("Connection index" + DoubleToString(currentConnection), { 4 * NORMALISED_SIZE , 0 }, font);
+	Button left(" < ", { 0 * NORMALISED_SIZE , 0 }, font);
+	Button right(" > ", { NORMALISED_SIZE * 24, 0 }, font);
+
+	Table table;
+	List value("Value", { 0,NORMALISED_SIZE * 3 }, 6, font, 10);
+	List position("Position", { NORMALISED_SIZE * 6, NORMALISED_SIZE * 3 }, 9, font, 10);
+	List status("Status", { NORMALISED_SIZE * 15, NORMALISED_SIZE * 3 }, 30, font, 10);
+
+	std::vector<std::vector<ValueIndex>> answer;
+	
+	Panel panel("Choose option:", {0,350}, font);
+	Button ORButton("OR", { NORMALISED_SIZE * 17,350 }, font);
+	Button ANDButton("AND", { NORMALISED_SIZE * 17, 350 + NORMALISED_SIZE * 3 }, font);
+	Button ContinueButton("Continue", { NORMALISED_SIZE * 17, 350 + NORMALISED_SIZE * 9 }, font);
 
 	std::vector<ValueIndex> temp = TypeEventCards(w, font, countOfSE);
 	
@@ -737,7 +762,34 @@ std::vector<std::vector<ValueIndex>> MakeEvent(sf::RenderWindow& w, sf::Font& fo
 	for (int i = 0; i < temp.size(); i++)
 	{
 		answer.push_back(temp);
+		value.AddElement(DoubleToString(answer[currentConnection][i].value), font);
+		position.AddElement(DoubleToString(answer[currentConnection][i].index), font);
+		if (answer[currentConnection][i].status == Status::AnotherValueOnThisPosition)
+		{
+			status.AddElement("Enother value on this position", font);
+		}
+		else if (answer[currentConnection][i].status == Status::IndexAbove)
+		{
+			status.AddElement("Value above this position", font);
+		}
+		else if (answer[currentConnection][i].status == Status::IndexIsLower)
+		{
+			status.AddElement("Value under this position", font);
+		}
+
+		else if (answer[currentConnection][i].status == Status::ThisValueOnEnotherPosition)
+		{
+			status.AddElement("Value under this position", font);
+		}
+		else
+		{
+			status.AddElement("Value on this position", font);
+		}
 	}
+
+	table.AddColumn(value);
+	table.AddColumn(position);
+	table.AddColumn(status);
 
 	while (w.isOpen())
 	{
@@ -758,6 +810,10 @@ std::vector<std::vector<ValueIndex>> MakeEvent(sf::RenderWindow& w, sf::Font& fo
 				ORButton.SetIsPressed(mousePosition);
 				ANDButton.SetIsPressed(mousePosition);
 				ContinueButton.SetIsPressed(mousePosition);
+				UP.SetIsPressed(mousePosition);
+				DOWN.SetIsPressed(mousePosition);
+				left.SetIsPressed(mousePosition);
+				right.SetIsPressed(mousePosition);
 
 				if (ORButton.IsPressed())
 				{
@@ -765,6 +821,11 @@ std::vector<std::vector<ValueIndex>> MakeEvent(sf::RenderWindow& w, sf::Font& fo
 
 					answer.push_back(temp);
 					currentIndex++;
+					
+					value.Clear();
+					position.Clear();
+					status.Clear();
+
 					temp.clear();
 					break;
 				}
@@ -772,11 +833,138 @@ std::vector<std::vector<ValueIndex>> MakeEvent(sf::RenderWindow& w, sf::Font& fo
 				if (ANDButton.IsPressed())
 				{
 					temp = TypeEventCards(w, font, countOfSE);
+
+					for (int i = 0; i < temp.size(); i++)
+					{
+						value.AddElement(DoubleToString(temp[i].value), font);
+						position.AddElement(DoubleToString(temp[i].index), font);
+						if (temp[i].status == Status::AnotherValueOnThisPosition)
+						{
+							status.AddElement("Enother value on this position", font);
+						}
+						else if (temp[i].status == Status::IndexAbove)
+						{
+							status.AddElement("Value above this position", font);
+						}
+						else if (temp[i].status == Status::IndexIsLower)
+						{
+							status.AddElement("Value under this position", font);
+						}
+
+						else if (temp[i].status == Status::ThisValueOnEnotherPosition)
+						{
+							status.AddElement("Value under this position", font);
+						}
+						else
+						{
+							status.AddElement("Value on this position", font);
+						}
+					}
+
+					table.SetColumnByIndex(0, value);
+					table.SetColumnByIndex(1, position);
+					table.SetColumnByIndex(2, status);
+
 					answer[currentIndex].push_back(temp[0]);
 					temp.clear();
 					break;
 				}
 
+				if (UP.IsPressed())
+				{
+					table.ScrollUp();
+				}
+				if (DOWN.IsPressed())
+				{
+					table.ScrollDown();
+				}
+				if (left.IsPressed())
+				{
+					if (currentConnection > 0)
+						currentConnection--;
+					else
+						currentConnection = answer.size() - 1;
+
+					connectionIndex.SetText("Connection index" + DoubleToString(currentConnection));
+					value.Clear();
+					position.Clear();
+					status.Clear();
+
+					for (int i = 0; i < answer[currentConnection].size(); i++)
+					{
+						value.AddElement(DoubleToString(answer[currentConnection][i].value), font);
+						position.AddElement(DoubleToString(answer[currentConnection][i].index), font);
+						if (answer[currentConnection][i].status == Status::AnotherValueOnThisPosition)
+						{
+							status.AddElement("Enother value on this position", font);
+						}
+						else if (answer[currentConnection][i].status == Status::IndexAbove)
+						{
+							status.AddElement("Value above this position", font);
+						}
+						else if (answer[currentConnection][i].status == Status::IndexIsLower)
+						{
+							status.AddElement("Value under this position", font);
+						}
+
+						else if (answer[currentConnection][i].status == Status::ThisValueOnEnotherPosition)
+						{
+							status.AddElement("Value under this position", font);
+						}
+						else
+						{
+							status.AddElement("Value on this position", font);
+						}
+					}
+
+					table.SetColumnByIndex(0, value);
+					table.SetColumnByIndex(1, position);
+					table.SetColumnByIndex(2, status);
+				}
+				if (right.IsPressed())
+				{
+					if (currentConnection < answer.size() - 1)
+						currentConnection++;
+					else
+						currentConnection = 0;
+
+					connectionIndex.SetText("Connection index" + DoubleToString(currentConnection));
+
+					value.Clear();
+					position.Clear();
+					status.Clear();
+
+					for (int i = 0; i < answer[currentConnection].size(); i++)
+					{
+						value.AddElement(DoubleToString(answer[currentConnection][i].value), font);
+						position.AddElement(DoubleToString(answer[currentConnection][i].index), font);
+						if (answer[currentConnection][i].status == Status::AnotherValueOnThisPosition)
+						{
+							status.AddElement("Enother value on this position", font);
+						}
+						else if (answer[currentConnection][i].status == Status::IndexAbove)
+						{
+							status.AddElement("Value above this position", font);
+						}
+						else if (answer[currentConnection][i].status == Status::IndexIsLower)
+						{
+							status.AddElement("Value under this position", font);
+						}
+
+						else if (answer[currentConnection][i].status == Status::ThisValueOnEnotherPosition)
+						{
+							status.AddElement("Value under this position", font);
+						}
+						else
+						{
+							status.AddElement("Value on this position", font);
+						}
+					}
+
+					table.SetColumnByIndex(0, value);
+					table.SetColumnByIndex(1, position);
+					table.SetColumnByIndex(2, status);
+				}
 				if (ContinueButton.IsPressed())
 				{
 					return answer;
@@ -785,7 +973,14 @@ std::vector<std::vector<ValueIndex>> MakeEvent(sf::RenderWindow& w, sf::Font& fo
 		}
 
 		w.clear();
-		description.Draw(w);
+		UP.Draw(w);
+		DOWN.Draw(w);
+		left.Draw(w);
+		right.Draw(w);
+		connectionIndex.Draw(w);
+
+		table.Draw(w);
+
 		panel.Draw(w);
 		ORButton.Draw(w);
 		ANDButton.Draw(w);
@@ -799,9 +994,6 @@ std::vector <std::vector<ValueIndex>> CardMenu(sf::RenderWindow& w, sf::Font& f,
 {
 	c.DoExperiment();
 	std::vector <std::vector<ValueIndex>> userEvents(0);
-
-	Panel description("You should creat least 1 event for continue", {0,160}, f);
-	description.SetShapeColor(sf::Color(204, 204, 255));
 	Button continueButton("Continue", {0,200 + NORMALISED_SIZE * 3 },f);
 	continueButton.SetEnable(0);
 	Button makeEventButton("Make event", {0,200}, f);
@@ -836,7 +1028,7 @@ std::vector <std::vector<ValueIndex>> CardMenu(sf::RenderWindow& w, sf::Font& f,
 				}
 				if (makeEventButton.IsPressed())
 				{
-					userEvents = (MakeEvent(w, f, c.GetCountEvent()));
+					userEvents = MakeEvent(w, f, c.GetCountEvent());
 					continueButton.SetEnable(1);
 					flag = 1;
 					break;
@@ -845,8 +1037,6 @@ std::vector <std::vector<ValueIndex>> CardMenu(sf::RenderWindow& w, sf::Font& f,
 		}
 
 		w.clear();
-
-		description.Draw(w);
 		continueButton.Draw(w);
 		makeEventButton.Draw(w);
 		w.display();
@@ -958,12 +1148,12 @@ void UI(sf::RenderWindow& w, sf::Font& f)
 				{
 					if (cardsEvents.size() != 0)
 					{
-						ShowResultat( w, f, newCards, cardsEvents);
+						ShowResult( w, f, newCards, cardsEvents);
 					}
 
 					else
 					{
-						ShowResultat(newDice, w, f);
+						ShowResult(newDice, w, f);
 					}
 					break;
 				}
@@ -983,62 +1173,63 @@ void UI(sf::RenderWindow& w, sf::Font& f)
 	}
 }
 
-void ShowResultat(Dice& dice, sf::RenderWindow& w, sf::Font& f)
+void ShowResult(Dice& dice, sf::RenderWindow& w, sf::Font& f)
 {
-	int index1 = 0;
-	int index2 = 0;
-	int index3 = 0;
-
-	int totalCountOfUserEvent = dice.GetUserEvent().size();
-
 	std::vector<int> countEverySE = dice.CountEveryValu();
-	std::vector<int> countEveryUserEvent;
-	int temp = 0;
 
+	Table result1;
+	Table result2;
 
-	for (int i = 0; i < totalCountOfUserEvent; i++)
+	const int visibleCount = 10;
+	int index = 0;
+
+	List temp1("Step", {0,100}, 8, f, visibleCount);
+	for (int i = 0; i < dice.GetResultat().size(); i++)
 	{
-		for (int j = 0; j < dice.GetCountEvent(); j++)
-		{
-			if (EventContainThisValue(j + 1, dice.GetUserEvent()[i]))
-			{
-				temp += countEverySE[j];
-			}
-		}
-		countEveryUserEvent.push_back(temp);
-		temp = 0;
+		temp1.AddElement(DoubleToString(i + 1), f);
+	}
+	List temp2("Value", { NORMALISED_SIZE * 8,100 }, 8, f, visibleCount);
+	for (int i = 0; i < dice.GetResultat().size(); i++)
+	{
+		temp2.AddElement(DoubleToString(dice.GetResultat()[i]), f);
 	}
 
-	if (countEveryUserEvent.size() == 0)
+	List temp3("Value", { NORMALISED_SIZE * 24, 100 }, 5, f, visibleCount);
+	for (int i = 0; i < dice.GetUserEvent()[index].size(); i++)
 	{
-		countEveryUserEvent = std::vector<int>(1);
+		temp3.AddElement(DoubleToString(dice.GetUserEvent()[index][i].GetValue()), f);
 	}
 
-	std::vector<int> res = dice.GetResultat();
+	List temp4("Probability", { NORMALISED_SIZE * 29, 100 }, 11, f, visibleCount);
+	for (int i = 0; i < dice.GetUserEvent()[index].size(); i++)
+	{
+		temp4.AddElement(DoubleToString(dice.GetUserEvent()[index][i].GetProbabylity()), f);
+	}
+	List temp5("Count", { NORMALISED_SIZE * 40, 100 }, 6, f, visibleCount);
+	for (int i = 0; i < dice.GetUserEvent()[index].size(); i++)
+	{
+		temp5.AddElement(DoubleToString(countEverySE[dice.GetUserEvent()[index][i].GetValue() - 1]), f);
+	}
+
+	result1.AddColumn(temp1);
+	result1.AddColumn(temp2);
+	result2.AddColumn(temp3);
+	result2.AddColumn(temp4);
+	result2.AddColumn(temp5);
 
 	Button EXIT("EXIT", { 0,200 + NORMALISED_SIZE * 14 }, f);
+	
+	Panel countUserEvent("Current event index:", { NORMALISED_SIZE * 23,60},f);
+	Panel countUserEvent2(DoubleToString(index + 1), { NORMALISED_SIZE * 43 ,60}, f);
+	countUserEvent2.SetWidth(4);
 
-	/*Panel description1("Show resultat (all droped values step by step)", { NORMALISED_SIZE * 42,200 }, f);
-	description1.SetShapeColor(sf::Color(204, 204, 255));
-	Panel description2("Shows count of each event", { NORMALISED_SIZE * 42,200 + NORMALISED_SIZE * 3 }, f);
-	description2.SetShapeColor(sf::Color(204, 204, 255));
-	Panel description3("Shows count of each simple event", { NORMALISED_SIZE * 42,200 + NORMALISED_SIZE * 6 }, f);
-	description3.SetShapeColor(sf::Color(204, 204, 255));*/
+	Button UP(" ^ ", { NORMALISED_SIZE * 17 , 100}, f);
+	Button DOWN(" v ", { NORMALISED_SIZE * 17 , 100 + NORMALISED_SIZE * 2 * visibleCount}, f);
+	Button UP2(" ^ ", { NORMALISED_SIZE * 48, 100 }, f);
+	Button DOWN2(" v ", { NORMALISED_SIZE * 48 ,100 + NORMALISED_SIZE * 2 * visibleCount }, f);
 
-	Panel panel11("        Steps:        ", { 0,200 }, f);
-	Panel panel21(" Value of user event: ", { 0,200 + NORMALISED_SIZE * 3 }, f);
-	Panel panel31("Value of simple event:", { 0,200 + NORMALISED_SIZE * 6 }, f);
-
-	Panel panel12(DoubleToString(index1 + 1) + ")" + DoubleToString(res[0]), { NORMALISED_SIZE * 30,200 }, f);
-	Panel panel22(DoubleToString(index2 + 1) + ")" + DoubleToString(countEveryUserEvent[0]), {NORMALISED_SIZE * 30,200 + NORMALISED_SIZE * 3 }, f);
-	Panel panel32(DoubleToString(index3 + 1) + ": " + DoubleToString(countEverySE[0]), { NORMALISED_SIZE * 30,200 + NORMALISED_SIZE * 6 }, f);
-
-	Button b1L(" < ", { NORMALISED_SIZE * 25 , 200 }, f);
-	Button b1R(" > ", { NORMALISED_SIZE * 48 , 200 }, f);
-	Button b2L(" < ", { NORMALISED_SIZE * 25 , 200 + NORMALISED_SIZE * 3 }, f);
-	Button b2R(" > ", { NORMALISED_SIZE * 48 , 200 + NORMALISED_SIZE * 3 }, f);
-	Button b3L(" < ", { NORMALISED_SIZE * 25 , 200 + NORMALISED_SIZE * 6 }, f);
-	Button b3R(" > ", { NORMALISED_SIZE * 48 , 200 + NORMALISED_SIZE * 6 }, f);
+	Button Left(" < ", { NORMALISED_SIZE * 17,60 }, f);
+	Button Right(" > ", { NORMALISED_SIZE * 50,60 }, f);
 
 	while (w.isOpen())
 	{
@@ -1054,77 +1245,93 @@ void ShowResultat(Dice& dice, sf::RenderWindow& w, sf::Font& f)
 			if (event.type == sf::Event::MouseButtonPressed)
 			{
 				sf::Vector2i mousePosition = sf::Mouse::getPosition(w);
-
-				b1L.SetIsPressed(mousePosition);
-				b1R.SetIsPressed(mousePosition);
-				b2L.SetIsPressed(mousePosition);
-				b2R.SetIsPressed(mousePosition);
-				b3L.SetIsPressed(mousePosition);
-				b3R.SetIsPressed(mousePosition);
+				UP.SetIsPressed(mousePosition);
+				DOWN.SetIsPressed(mousePosition);
+				UP2.SetIsPressed(mousePosition);
+				DOWN2.SetIsPressed(mousePosition);
+				Left.SetIsPressed(mousePosition);
+				Right.SetIsPressed(mousePosition);
 
 				EXIT.SetIsPressed(mousePosition);
-
-				if (b1L.IsPressed())
+				if (UP.IsPressed())
 				{
-					if (index1 == 0)
-						index1 = res.size() - 1;
-					else
-						index1--;
-
-					panel12.SetText(DoubleToString(index1 + 1) + ")" + DoubleToString(res[index1]));
+					result1.ScrollUp();
 					break;
 				}
-				if (b1R.IsPressed())
+				if (DOWN.IsPressed())
 				{
-					if (index1 == res.size() - 1)
-						index1 = 0;
-					else
-						index1++;
-
-					panel12.SetText(DoubleToString(index1 + 1) + ")" + DoubleToString(res[index1]));
+					result1.ScrollDown();
+					break;
+				}		
+				if (UP2.IsPressed())
+				{
+					result2.ScrollUp();
 					break;
 				}
-				if (b2L.IsPressed())
+				if (DOWN2.IsPressed())
 				{
-					if (index2 == 0)
-						index2 = countEveryUserEvent.size() - 1;
-					else
-						index2--;
-
-					panel22.SetText(DoubleToString(index2 + 1) + ")" + DoubleToString(countEveryUserEvent[index2]));
+					result2.ScrollDown();
 					break;
 				}
-				if (b2R.IsPressed())
+				if (Left.IsPressed())
 				{
-					if (index2 == countEveryUserEvent.size() - 1)
-						index2 = 0;
-					else
-						index2++;
+					if (index > 0)
+					{
+						index--;
 
-					panel22.SetText(DoubleToString(index2 + 1) + ")" + DoubleToString(countEveryUserEvent[index2]));
-					break;
+						temp3.Clear();
+						for (int i = 0; i < dice.GetUserEvent()[index].size(); i++)
+						{
+							temp3.AddElement(DoubleToString(dice.GetUserEvent()[index][i].GetValue()), f);
+						}
+
+						temp4.Clear();
+						for (int i = 0; i < dice.GetUserEvent()[index].size(); i++)
+						{
+							temp4.AddElement(DoubleToString(dice.GetUserEvent()[index][i].GetProbabylity()), f);
+						}
+
+						temp5.Clear();
+						for (int i = 0; i < dice.GetUserEvent()[index].size(); i++)
+						{
+							temp5.AddElement(DoubleToString(countEverySE[dice.GetUserEvent()[index][i].GetValue() - 1]), f);
+						}
+						result2.SetColumnByIndex(0, temp3);
+						result2.SetColumnByIndex(1, temp4);
+						result2.SetColumnByIndex(2, temp5);
+
+						countUserEvent2.SetText((DoubleToString(index + 1)));
+					}
 				}
-				if (b3L.IsPressed())
+				if (Right.IsPressed())
 				{
-					if (index3 == 0)
-						index3 = countEverySE.size() - 1;
-					else
-						index3--;
+					if (index < dice.GetUserEvent().size() - 1)
+					{
+						index++;
 
-					panel32.SetText(DoubleToString(index3 + 1) + ": " + DoubleToString(countEverySE[index3]));
-					break;
+						temp3.Clear();
+						for (int i = 0; i < dice.GetUserEvent()[index].size(); i++)
+						{
+							temp3.AddElement(DoubleToString(dice.GetUserEvent()[index][i].GetValue()), f);
+						}
+
+						temp4.Clear();
+						for (int i = 0; i < dice.GetUserEvent()[index].size(); i++)
+						{
+							temp4.AddElement(DoubleToString(dice.GetUserEvent()[index][i].GetProbabylity()), f);
+						}
+
+						temp5.Clear();
+						for (int i = 0; i < dice.GetUserEvent()[index].size(); i++)
+						{
+							temp5.AddElement(DoubleToString(countEverySE[dice.GetUserEvent()[index][i].GetValue() - 1]), f);
+						}
+						result2.SetColumnByIndex(0, temp3);
+						result2.SetColumnByIndex(1, temp4);
+						result2.SetColumnByIndex(2, temp5);
+						countUserEvent2.SetText((DoubleToString(index + 1)));
+					}
 				}
-				if (b3R.IsPressed())
-				{
-					if (index3 == countEverySE.size() - 1)
-						index3 = 0;
-					else
-						index3++;
-
-					panel32.SetText(DoubleToString(index3 + 1) + ": " + DoubleToString(countEverySE[index3]));
-					break;
-				}
-
 				if (EXIT.IsPressed())
 				{
 					return;
@@ -1133,35 +1340,46 @@ void ShowResultat(Dice& dice, sf::RenderWindow& w, sf::Font& f)
 		}
 
 		w.clear();
-
-		//description1.Draw(w);
-		//description2.Draw(w);
-		//description3.Draw(w);
-
-		b1L.Draw(w);
-		b1R.Draw(w);
-		b2L.Draw(w);
-		b2R.Draw(w);
-		b3L.Draw(w);
-		b3R.Draw(w);
+		result1.Draw(w);
+		result2.Draw(w);
+		countUserEvent.Draw(w);
+		countUserEvent2.Draw(w);
+		Left.Draw(w);
+		Right.Draw(w);
+		UP.Draw(w);
+		DOWN.Draw(w);
+		UP2.Draw(w);
+		DOWN2.Draw(w);
 		EXIT.Draw(w);
-
-		panel11.Draw(w);
-		panel12.Draw(w);
-		panel21.Draw(w);
-		panel22.Draw(w);
-		panel31.Draw(w);
-		panel32.Draw(w);
-
 		w.display();
 	}
 
 }
-void ShowResultat(sf::RenderWindow& w, sf::Font& f, PlayingCards& cards, std::vector<std::vector<ValueIndex>> userEvent)
+
+void ShowResult(sf::RenderWindow& w, sf::Font& f, PlayingCards& cards, std::vector<std::vector<ValueIndex>> userEvent)
 {
-	int index1 = 0;
-	int index2i = 0;
-	int index2j = 0;
+	int index = 0;
+
+	Table t1;
+	Button UP1(" ^ ", { NORMALISED_SIZE * 12, NORMALISED_SIZE * 3 }, f);
+	Button DOWN1(" v ", { NORMALISED_SIZE * 12, NORMALISED_SIZE * 14 }, f);
+	List l11("Step", { 0, NORMALISED_SIZE * 3 }, 5, f, 10);
+	List l12("Value", { 5 * NORMALISED_SIZE, NORMALISED_SIZE * 3 }, 5, f, 10);
+
+	for (int i = 0; i < cards.GetResultat().size(); i++)
+	{
+		l11.AddElement(DoubleToString(i + 1), f);
+		l12.AddElement(DoubleToString(cards.GetResultat()[i]), f);
+	}
+
+
+	t1.AddColumn(l11);
+	t1.AddColumn(l12);
+
+
+	Panel finalEvent(DoubleToString(index) + " event that happened", {NORMALISED_SIZE * 24,0}, f);
+	Button left(" < ", { 20 * NORMALISED_SIZE,0 }, f);
+	Button right(" > ", { 47 * NORMALISED_SIZE,0 }, f);
 
 	std::vector<int> res = cards.GetResultat();
 
@@ -1204,7 +1422,7 @@ void ShowResultat(sf::RenderWindow& w, sf::Font& f, PlayingCards& cards, std::ve
 				}
 				break;
 
-			case Status::IndexIsHire:
+			case Status::IndexAbove:
 
 				eventHeppend = 0;
 
@@ -1237,35 +1455,46 @@ void ShowResultat(sf::RenderWindow& w, sf::Font& f, PlayingCards& cards, std::ve
 		winEventIndex.push_back(userEvent[i]);
 	}
 
-	Button EXIT("EXIT", { 0,200 + NORMALISED_SIZE * 14 }, f);
+	Table t2;
+	Button UP2(" ^ ", { NORMALISED_SIZE * 67, NORMALISED_SIZE * 3 }, f);
+	Button DOWN2(" v ", { NORMALISED_SIZE * 67, NORMALISED_SIZE * 14 }, f);
+	List l21("Value", { 20 * NORMALISED_SIZE, NORMALISED_SIZE * 3 }, 6, f, 10);
+	List l22("Position", { 26 * NORMALISED_SIZE, NORMALISED_SIZE * 3 }, 9, f, 10);
+	List l23("Status", { 35 * NORMALISED_SIZE, NORMALISED_SIZE * 3 }, 30, f, 10);
 
-	Panel panel11("         Steps:         ", { 0,200 }, f);
-	Panel panel21("      Combination:      ", { 0,200 + NORMALISED_SIZE * 3 }, f);
-	Panel panel31("   Combination index:   ", { 0,200 + NORMALISED_SIZE * 6 }, f);
-
-	/*Panel description1("Show resultat (step by step 'drawing' cards)", { NORMALISED_SIZE * 42,200}, f);
-	description1.SetShapeColor(sf::Color(204, 204, 255));
-	Panel description2("Shows values, that happened", { NORMALISED_SIZE * 42,200 + NORMALISED_SIZE * 3 }, f);
-	description2.SetShapeColor(sf::Color(204, 204, 255));
-	Panel description3("Index of combination, that happened", { NORMALISED_SIZE * 42,200 + NORMALISED_SIZE * 6 }, f);
-	description3.SetShapeColor(sf::Color(204, 204, 255));*/
-
-	Panel panel12(DoubleToString(index1+1) + ")" + DoubleToString(res[index1]), { NORMALISED_SIZE * 30,200 }, f);
-
-	Panel panel22("", { NORMALISED_SIZE * 30,200 + NORMALISED_SIZE * 3 }, f);
-	if (winEventIndex.size() != 0)
+	for (int i = 0; i < winEventIndex[index].size(); i++)
 	{
-		panel22.SetText((DoubleToString(index2j + 1) + ")" + DoubleToString(winEventIndex[index2i][index2j].value)));
+		l21.AddElement(DoubleToString(winEventIndex[index][i].value), f);
+		l22.AddElement(DoubleToString(winEventIndex[index][i].index), f);
+
+		if (winEventIndex[index][i].status == Status::AnotherValueOnThisPosition)
+		{
+			l23.AddElement("Enother value on this position", f);
+		}
+		else if (winEventIndex[index][i].status == Status::IndexAbove)
+		{
+			l23.AddElement("Value above this position", f);
+		}
+		else if (winEventIndex[index][i].status == Status::IndexIsLower)
+		{
+			l23.AddElement("Value under this position", f);
+		}
+
+		else if (winEventIndex[index][i].status == Status::ThisValueOnEnotherPosition)
+		{
+			l23.AddElement("Value under this position", f);
+		}
+		else
+		{
+			l23.AddElement("Value on this position", f);
+		}
 	}
 
-	Panel panel32(DoubleToString(index2i+1), { NORMALISED_SIZE * 30,200 + NORMALISED_SIZE * 6}, f);
+	t2.AddColumn(l21);
+	t2.AddColumn(l22);
+	t2.AddColumn(l23);
 
-	Button b1L(" < ", { NORMALISED_SIZE * 25 , 200 }, f);
-	Button b1R(" > ", { NORMALISED_SIZE * 48 , 200 }, f);
-	Button b2L(" < ", { NORMALISED_SIZE * 25 , 200 + NORMALISED_SIZE * 3 }, f);
-	Button b2R(" > ", { NORMALISED_SIZE * 48 , 200 + NORMALISED_SIZE * 3 }, f);
-	Button b3L(" < ", { NORMALISED_SIZE * 25 , 200 + NORMALISED_SIZE * 6 }, f);
-	Button b3R(" > ", { NORMALISED_SIZE * 48 , 200 + NORMALISED_SIZE * 6 }, f);
+	Button EXIT("EXIT", { 0,200 + NORMALISED_SIZE * 14 }, f);
 
 	while (w.isOpen())
 	{
@@ -1282,90 +1511,120 @@ void ShowResultat(sf::RenderWindow& w, sf::Font& f, PlayingCards& cards, std::ve
 			{
 				sf::Vector2i mousePosition = sf::Mouse::getPosition(w);
 
-				b1L.SetIsPressed(mousePosition);
-				b1R.SetIsPressed(mousePosition);
-				b2L.SetIsPressed(mousePosition);
-				b2R.SetIsPressed(mousePosition);
-				b3L.SetIsPressed(mousePosition);
-				b3R.SetIsPressed(mousePosition);
-
 				EXIT.SetIsPressed(mousePosition);
+				UP1.SetIsPressed(mousePosition);
+				UP2.SetIsPressed(mousePosition);
+				DOWN1.SetIsPressed(mousePosition);
+				DOWN2.SetIsPressed(mousePosition);
+				left.SetIsPressed(mousePosition);
+				right.SetIsPressed(mousePosition);
 
-				if (b1L.IsPressed())
+				if (UP1.IsPressed())
 				{
-					if (index1 == 0)
-						index1 = res.size() - 1;
+					t1.ScrollUp();
+				}
+				if (UP2.IsPressed())
+				{
+					t2.ScrollUp();
+				}
+				if (DOWN1.IsPressed())
+				{
+					t1.ScrollDown();
+				}
+				if (DOWN2.IsPressed())
+				{
+					t2.ScrollDown();
+				}
+				if (left.IsPressed())
+				{
+					if (index > 0)
+						index--;
 					else
-						index1--;
+						index = winEventIndex.size() - 1;
 
-					panel12.SetText(DoubleToString(index1+1) + ")" + DoubleToString(res[index1]));
+					finalEvent.SetText(DoubleToString(index) + " event that happened");
+
+					l21.Clear();
+					l22.Clear();
+					l23.Clear();
+
+					for (int i = 0; i < winEventIndex[index].size(); i++)
+					{
+						l21.AddElement(DoubleToString(winEventIndex[index][i].value), f);
+						l22.AddElement(DoubleToString(winEventIndex[index][i].index), f);
+
+						if (winEventIndex[index][i].status == Status::AnotherValueOnThisPosition)
+						{
+							l23.AddElement("Enother value on this position", f);
+						}
+						else if (winEventIndex[index][i].status == Status::IndexAbove)
+						{
+							l23.AddElement("Value above this position", f);
+						}
+						else if (winEventIndex[index][i].status == Status::IndexIsLower)
+						{
+							l23.AddElement("Value under this position", f);
+						}
+
+						else if (winEventIndex[index][i].status == Status::ThisValueOnEnotherPosition)
+						{
+							l23.AddElement("Value under this position", f);
+						}
+						else
+						{
+							l23.AddElement("Value on this position", f);
+						}
+					}
+
+					t2.SetColumnByIndex(0, l21);
+					t2.SetColumnByIndex(1, l22);
+					t2.SetColumnByIndex(2, l23);
 					break;
 				}
-				if (b1R.IsPressed())
+				if (right.IsPressed())
 				{
-					if (index1 == res.size() - 1)
-						index1 = 0;
+					if (index < winEventIndex.size() - 1)
+						index++;
 					else
-						index1++;
+						index = 0;
 
-					panel12.SetText(DoubleToString(index1+1) + ")" + DoubleToString(res[index1]));
-					break;
-				}
-				if (b2L.IsPressed())
-				{
-					if (winEventIndex.size() != 0)
+					finalEvent.SetText(DoubleToString(index) + " event that happened");
+
+					l21.Clear();
+					l22.Clear();
+					l23.Clear();
+
+					for (int i = 0; i < winEventIndex[index].size(); i++)
 					{
-						if (index2j == 0)
-							index2j = winEventIndex[index2i].size() - 1;
+						l21.AddElement(DoubleToString(winEventIndex[index][i].value), f);
+						l22.AddElement(DoubleToString(winEventIndex[index][i].index), f);
+
+						if (winEventIndex[index][i].status == Status::AnotherValueOnThisPosition)
+						{
+							l23.AddElement("Enother value on this position", f);
+						}
+						else if (winEventIndex[index][i].status == Status::IndexAbove)
+						{
+							l23.AddElement("Value above this position", f);
+						}
+						else if (winEventIndex[index][i].status == Status::IndexIsLower)
+						{
+							l23.AddElement("Value under this position", f);
+						}
+
+						else if (winEventIndex[index][i].status == Status::ThisValueOnEnotherPosition)
+						{
+							l23.AddElement("Value under this position", f);
+						}
 						else
-							index2j--;
-
-					
-							panel22.SetText((DoubleToString(index2j + 1) + ")" + DoubleToString(winEventIndex[index2i][index2j].value)));
+						{
+							l23.AddElement("Value on this position", f);
+						}
 					}
-					break;
-				}
-				if (b2R.IsPressed())
-				{
-					if (winEventIndex.size() != 0)
-					{
-						if (index2j == winEventIndex[index2i].size() - 1)
-							index2j = 0;
-						else
-							index2j++;
 
-						panel22.SetText((DoubleToString(index2j + 1) + ")" + DoubleToString(winEventIndex[index2i][index2j].value)));
-					}
-					break;
-				}
-
-				if (b3L.IsPressed())
-				{
-					if (winEventIndex.size() != 0)
-					{
-						if (index2i == 0)
-							index2i = winEventIndex.size() - 1;
-						else
-							index2i--;
-					
-							panel22.SetText((DoubleToString(index2j + 1) + ")" + DoubleToString(winEventIndex[index2i][index2j].value)));
-							panel32.SetText(DoubleToString(index2i + 1));
-					}
-					break;
-				}
-
-				if (b3R.IsPressed())
-				{
-					if (winEventIndex.size() != 0)
-					{
-						if (index2i  == winEventIndex.size() - 1)
-							index2i = 0;
-						else
-							index2i++;
-
-						panel22.SetText((DoubleToString(index2j + 1) + ")" + DoubleToString(winEventIndex[index2i][index2j].value)));
-						panel32.SetText(DoubleToString(index2i + 1));
-					}
+					t2.SetColumnByIndex(0, l21);
+					t2.SetColumnByIndex(1, l22);
+					t2.SetColumnByIndex(2, l23);
 					break;
 				}
 				if (EXIT.IsPressed())
@@ -1376,25 +1635,18 @@ void ShowResultat(sf::RenderWindow& w, sf::Font& f, PlayingCards& cards, std::ve
 		}
 
 		w.clear();
-		/*description1.Draw(w);
-		description2.Draw(w);
-		description3.Draw(w);*/
 
-		b1L.Draw(w);
-		b1R.Draw(w);
-		b2L.Draw(w);
-		b2R.Draw(w);
-		b3L.Draw(w);
-		b3R.Draw(w);
+		t1.Draw(w);
+		t2.Draw(w);
+		finalEvent.Draw(w);
+		left.Draw(w);
+		right.Draw(w);
+		UP1.Draw(w);
+		DOWN1.Draw(w);
+		UP2.Draw(w);
+		DOWN2.Draw(w);
 
 		EXIT.Draw(w);
-
-		panel11.Draw(w);
-		panel12.Draw(w);
-		panel21.Draw(w);
-		panel22.Draw(w);
-		panel31.Draw(w);
-		panel32.Draw(w);
 
 		w.display();
 	}

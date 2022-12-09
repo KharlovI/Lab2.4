@@ -18,9 +18,14 @@ public:
 	void Draw(sf::RenderWindow& w);
 
 	void SetText(std::string text);
+	void SetFont(sf::Font& font);
 	void SetPosition(sf::Vector2f position);
 	void Clean();
+	void SetWidth(int charsCount);
 	void SetShapeColor(sf::Color c);
 	void SetTextColor(sf::Color c);
+	void SetCharSize(int size);
+
+	sf::RectangleShape& GetShape();
 };
 

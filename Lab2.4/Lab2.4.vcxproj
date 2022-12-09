@@ -150,7 +150,9 @@
     <ClCompile Include="Experiment.cpp" />
     <ClCompile Include="Field.cpp" />
     <ClCompile Include="Lab2.4.cpp" />
+    <ClCompile Include="List.cpp" />
     <ClCompile Include="Panel.cpp" />
+    <ClCompile Include="Table.cpp" />
     <ClCompile Include="Utilities.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -159,7 +161,9 @@
     <ClInclude Include="Event2.h" />
     <ClInclude Include="Experiment.h" />
     <ClInclude Include="Field.h" />
+    <ClInclude Include="List.h" />
     <ClInclude Include="Panel.h" />
+    <ClInclude Include="Table.h" />
     <ClInclude Include="Utilities.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -110,7 +110,6 @@ Dice::Dice()
 	std::vector<Event2> temp(0);
 	SetSimpleEvent(temp);
 }
-
 Dice::Dice(int countOfSimpleEvent, bool equal, sf::RenderWindow& w, sf::Event& e, sf::Font& font)
 {
 	if (equal)
@@ -421,16 +420,35 @@ void Dice::MakeEvent(sf::RenderWindow& w, sf::Font& font)
 {
 	std::vector<Event2> answer;
 	std::vector<Event2> temp;
-	Panel description("Choose the type of connection", { 0,0 }, font);
-	description.SetShapeColor(sf::Color(204, 204, 255));
+	//Panel description("Choose the type of connection", { 0,0 }, font);
+	//description.SetShapeColor(sf::Color(204, 204, 255));
 
 	Panel panel("Choose type:", {0,200}, font);
+	panel.SetShapeColor(sf::Color(204, 204, 255));
+
 	Button orButton		 ("    OR    ", { 0, 200 + (CHAR_SIZE_Button - 7) * 4},font);
 	Button andButton	 ("    AND   ", { 0, 200 + (CHAR_SIZE_Button - 7) * 7 }, font);
 	Button continueButton(" CONTINUE ", { 0, 200 + (CHAR_SIZE_Button - 7) * 10 }, font);
 
 	temp = EventClass(w, font);
 	answer = DifferentEvents(answer, temp);
+
+	List value("Value", { 400,200 }, 6, font, 10);
+	List probability("Probability", { 400 + (CHAR_SIZE_PANEL - 7) * 6,200 }, 12, font, 10);
+
+	Button UP("^", { 400 + (CHAR_SIZE_PANEL - 7) * 21,200 }, font);
+	Button DOWN("v", { 400 + (CHAR_SIZE_PANEL - 7) * 21,200 + (CHAR_SIZE_Button - 7) * 11 }, font);
+
+	Table table;
+
+	for (int i = 0; i < answer.size(); i++)
+	{
+		value.AddElement(DoubleToString(answer[i].GetValue()), font);
+		probability.AddElement(DoubleToString(answer[i].GetProbabylity()), font);
+	}
+
+	table.AddColumn(value);
+	table.AddColumn(probability);
 
 	while (w.isOpen())
 	{
@@ -451,17 +469,44 @@ void Dice::MakeEvent(sf::RenderWindow& w, sf::Font& font)
 				orButton.SetIsPressed(mousePosition);
 				andButton.SetIsPressed(mousePosition);
 				continueButton.SetIsPressed(mousePosition);
+				UP.SetIsPressed(mousePosition);
+				DOWN.SetIsPressed(mousePosition);
 
 				if (orButton.IsPressed())
 				{
 					temp = EventClass(w, font);
 					answer = DifferentEvents(answer, temp);
+
+					value.Clear();
+					probability.Clear();
+
+					for (int i = 0; i < answer.size(); i++)
+					{
+						value.AddElement(DoubleToString(answer[i].GetValue()), font);
+						probability.AddElement(DoubleToString(answer[i].GetProbabylity()), font);
+					}
+
+					table.SetColumnByIndex(0, value);
+					table.SetColumnByIndex(1, probability);
+					
 				}
 
 				else if (andButton.IsPressed())
 				{
 					temp = EventClass(w, font);
 					answer = SameEvents(answer, temp);
+
+					value.Clear();
+					probability.Clear();
+
+					for (int i = 0; i < answer.size(); i++)
+					{
+						value.AddElement(DoubleToString(answer[i].GetValue()), font);
+						probability.AddElement(DoubleToString(answer[i].GetProbabylity()), font);
+					}
+
+					table.SetColumnByIndex(0, value);
+					table.SetColumnByIndex(1, probability);
 				}
 
 				else if (continueButton.IsPressed())
@@ -469,11 +514,25 @@ void Dice::MakeEvent(sf::RenderWindow& w, sf::Font& font)
 					this->AddUserEvent(answer);
 					return;
 				}
+
+				if (UP.IsPressed())
+				{
+					table.ScrollUp();
+				}
+
+				else if (DOWN.IsPressed())
+				{
+					table.ScrollDown();
+				}
 			}
 		}
 
 		w.clear();
-		description.Draw(w);
+		//description.Draw(w);
+		table.Draw(w);
+		UP.Draw(w);
+		DOWN.Draw(w);
+
 		panel.Draw(w);
 		orButton.Draw(w);
 		andButton.Draw(w);
@@ -490,10 +549,10 @@ PlayingCards::PlayingCards()
 
 PlayingCards::PlayingCards(sf::RenderWindow& w, sf::Font& font)
 {
-	Panel description("Count of card - deck size", { 200,175 }, font);
+	Panel description("Count of card - deck size", { 0,0 }, font);
 	description.SetShapeColor(sf::Color(204, 204, 255));
-	Panel panel("Enter count of card:", {200,200}, font);
-	Field field({ 200 + (CHAR_SIZE_PANEL - 7) * 22, 200 }, 10, font);
+	Panel panel("Enter count of card:", {0,(CHAR_SIZE_PANEL - 7) * 4 }, font);
+	Field field({(CHAR_SIZE_PANEL - 7) * 20, (CHAR_SIZE_PANEL - 7) * 4 }, 10, font);
 	int countOfSE = 0;
 	bool flag = 0;
 
@@ -515,7 +574,10 @@ PlayingCards::PlayingCards(sf::RenderWindow& w, sf::Font& font)
 				{
 					field.SetSring(w, event);
 					countOfSE = StringToDouble(field.GetInput());
-					flag = 1;
+					if (countOfSE >= 1)
+					{
+						flag = 1;
+					}
 					break;
 				}
 			}
